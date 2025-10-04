@@ -214,6 +214,12 @@ If you see very few or no `RAILWAY_*` environment variables in your logs, this i
    - This will show all environment variables available to the container
    - You can also run manually: `railway run ./bin/check-env`
 
+6. **Build vs Runtime Environment Variables**
+   - Railway environment variables are only available at runtime, not during Docker build
+   - The database connection check now skips during asset precompilation (build time)
+   - This prevents build failures when Railway variables aren't available yet
+   - Database checks only run when the container actually starts (runtime)
+
 ### Deployment Fails with Database Connection Errors
 
 The application now **fails fast** with clear error messages instead of retrying indefinitely. You'll see one of these errors in the logs:

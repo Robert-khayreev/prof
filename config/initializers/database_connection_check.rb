@@ -4,6 +4,14 @@
 Rails.application.config.after_initialize do
   # Only check in production environment
   next unless Rails.env.production?
+  
+  # Skip database check during Docker build process
+  # Railway environment variables are only available at runtime, not build time
+  next if ENV['SECRET_KEY_BASE_DUMMY'].present?
+  
+  # Skip if we're in a build context (no DATABASE_URL and no RAILWAY_* vars)
+  # This prevents the check from running during Docker build when Railway vars aren't available
+  next if ENV['DATABASE_URL'].blank? && ENV.keys.none? { |k| k.start_with?('RAILWAY_') }
 
   begin
     # Debug: Show all database-related env vars
