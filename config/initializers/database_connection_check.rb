@@ -15,13 +15,24 @@ Rails.application.config.after_initialize do
     Rails.logger.info "  DB_HOST: #{ENV['DB_HOST'].present? ? "[SET: #{ENV['DB_HOST']}]" : '[NOT SET]'}"
     Rails.logger.info "  RAILS_ENV: #{Rails.env}"
     
+    # Print all environment variables
+    Rails.logger.info ""
+    Rails.logger.info "ALL ENVIRONMENT VARIABLES:"
+    Rails.logger.info "-" * 80
+    ENV.keys.sort.each do |key|
+      Rails.logger.info "  #{key}: #{ENV[key]}"
+    end
+    Rails.logger.info "-" * 80
+    
     # Check if DATABASE_URL is present for Railway/Heroku deployments
-    if ENV["DATABASE_URL"].blank? || ENV["DB_HOST"].blank?
+    # We need EITHER DATABASE_URL (Railway/Heroku) OR DB_HOST (Kamal), not both
+    if ENV["DATABASE_URL"].blank? && ENV["DB_HOST"].blank?
       Rails.logger.error ""
       Rails.logger.error "⚠️  DATABASE CONFIGURATION MISSING"
       Rails.logger.error "=" * 80
       Rails.logger.error ""
-      Rails.logger.error "Neither DATABASE_URL nor DB_HOST environment variable is set."
+      Rails.logger.error "NEITHER DATABASE_URL NOR DB_HOST environment variable is set."
+      Rails.logger.error "You need AT LEAST ONE of these variables configured."
       Rails.logger.error ""
       Rails.logger.error "If deploying to Railway:"
       Rails.logger.error "  1. Add PostgreSQL: Click '+ New' → 'Database' → 'Add PostgreSQL'"
