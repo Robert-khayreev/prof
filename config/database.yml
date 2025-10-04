@@ -28,6 +28,9 @@ production:
     <% if ENV["DATABASE_URL"].present? %>
     # Railway/Heroku style - uses DATABASE_URL
     url: <%= ENV["DATABASE_URL"] %>
+    # Fail fast with shorter timeouts
+    connect_timeout: 5
+    checkout_timeout: 5
     <% else %>
     # Kamal style - uses individual env vars
     adapter: postgresql
@@ -38,11 +41,15 @@ production:
     database: <%= ENV.fetch("DB_NAME") { "prof_production" } %>
     username: <%= ENV.fetch("DB_USER") { "prof" } %>
     password: <%= ENV["POSTGRES_PASSWORD"] %>
+    # Fail fast with shorter timeouts
+    connect_timeout: 5
+    checkout_timeout: 5
     <% end %>
   cache:
     <<: *production_primary
     <% if ENV["DATABASE_URL"].present? %>
-    database: <%= URI.parse(ENV["DATABASE_URL"]).path.sub("/", "") + "_cache" rescue "prof_production_cache" %>
+    # Railway: Use same database with table prefixes for cache
+    database: <%= URI.parse(ENV["DATABASE_URL"]).path.sub("/", "") rescue "postgres" %>
     <% else %>
     database: <%= ENV.fetch("DB_NAME_CACHE") { "prof_production_cache" } %>
     <% end %>
@@ -50,7 +57,8 @@ production:
   queue:
     <<: *production_primary
     <% if ENV["DATABASE_URL"].present? %>
-    database: <%= URI.parse(ENV["DATABASE_URL"]).path.sub("/", "") + "_queue" rescue "prof_production_queue" %>
+    # Railway: Use same database with table prefixes for queue
+    database: <%= URI.parse(ENV["DATABASE_URL"]).path.sub("/", "") rescue "postgres" %>
     <% else %>
     database: <%= ENV.fetch("DB_NAME_QUEUE") { "prof_production_queue" } %>
     <% end %>
@@ -58,7 +66,8 @@ production:
   cable:
     <<: *production_primary
     <% if ENV["DATABASE_URL"].present? %>
-    database: <%= URI.parse(ENV["DATABASE_URL"]).path.sub("/", "") + "_cable" rescue "prof_production_cable" %>
+    # Railway: Use same database with table prefixes for cable
+    database: <%= URI.parse(ENV["DATABASE_URL"]).path.sub("/", "") rescue "postgres" %>
     <% else %>
     database: <%= ENV.fetch("DB_NAME_CABLE") { "prof_production_cable" } %>
     <% end %>

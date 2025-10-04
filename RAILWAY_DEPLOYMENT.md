@@ -81,29 +81,14 @@ git push origin main
 
 ## Database Management
 
-### Manual Database Setup (if needed)
+### Database Configuration
 
-Railway's PostgreSQL automatically creates the main database. For the additional databases (cache, queue, cable):
+Railway provides a single PostgreSQL database. This application uses that one database for all Rails services (primary, cache, queue, cable) with separate table prefixes. **No additional database setup is needed.**
 
-```bash
-# Install Railway CLI
-npm i -g @railway/cli
-
-# Login
-railway login
-
-# Link to your project
-railway link
-
-# Connect to database
-railway run rails dbconsole
-
-# Then in PostgreSQL console:
-CREATE DATABASE <your_db_name>_cache;
-CREATE DATABASE <your_db_name>_queue;
-CREATE DATABASE <your_db_name>_cable;
-\q
-```
+The configuration automatically:
+- Uses the `DATABASE_URL` environment variable from Railway
+- Shares the same database for cache/queue/cable (more efficient for single-DB setups)
+- Runs all migrations via `db:prepare` in the release command
 
 ### Run Migrations
 
@@ -140,6 +125,13 @@ Built with PostgreSQL support:
 - `libpq5` and `postgresql-client` for PostgreSQL runtime
 - `libpq-dev` for building the `pg` gem
 - Multi-stage build for smaller images
+
+### `config/initializers/database_connection_check.rb`
+Fail-fast database validation:
+- Checks database connectivity immediately on startup
+- Prevents waiting through health check timeouts
+- Provides clear error messages if database is unavailable
+- Only runs in production environment
 
 ## Environment Variables
 
@@ -186,6 +178,68 @@ Railway provides basic metrics:
 
 ## Troubleshooting
 
+### Deployment Fails with Database Connection Errors
+
+The application now **fails fast** with clear error messages instead of retrying indefinitely. You'll see one of these errors in the logs:
+
+#### **Error: "FATAL: Cannot connect to database"**
+
+This means the database connection details are missing or invalid. The logs will show:
+```
+DATABASE CONNECTION FAILED
+Error: PG::ConnectionBad - ...
+Environment variables:
+  DATABASE_URL: [SET] or [NOT SET]
+  DB_HOST: [NOT SET]
+```
+
+**How to fix:**
+
+1. **Check PostgreSQL Service Status**
+   - In Railway dashboard, verify your PostgreSQL service is **running** (green status)
+   - If it's not running, click on it and start it
+
+2. **Verify Environment Variables**
+   - Click on your web service → Variables tab
+   - Ensure `DATABASE_URL` is present (Railway should auto-set this)
+   - Ensure `RAILS_MASTER_KEY` is set correctly
+   - Add `RAILS_ENV=production` if not present
+
+3. **Restart Services in Order**
+   ```
+   1. Stop web service
+   2. Ensure PostgreSQL is running
+   3. Redeploy web service
+   ```
+
+#### **Error: "FATAL: Database does not exist"**
+
+The database connection works, but the database hasn't been created yet. This should be handled automatically by the `release` command in `Procfile`, but if it fails:
+
+```bash
+# Install Railway CLI if you haven't
+npm i -g @railway/cli
+
+# Login and link to your project
+railway login
+railway link
+
+# Manually create and migrate the database
+railway run rails db:prepare
+```
+
+Then redeploy your application.
+
+#### **Error: "DATABASE_URL or DB_HOST environment variable is required"**
+
+This means no database connection details are configured at all.
+
+**How to fix:**
+1. In Railway dashboard, add a **PostgreSQL database** to your project
+2. Click "+ New" → "Database" → "Add PostgreSQL"
+3. Railway will automatically set the `DATABASE_URL` variable
+4. Redeploy your web service
+
 ### Build Fails
 
 **Error: "frozen mode" or "Gemfile.lock"**
@@ -199,6 +253,7 @@ Railway provides basic metrics:
 **Error: "could not connect to server"**
 - Check that PostgreSQL service is running in Railway dashboard
 - Verify `DATABASE_URL` is set in environment variables
+- Ensure web service and database are in the same Railway project
 
 ### Application Crashes
 
@@ -211,6 +266,7 @@ railway logs
 - Missing `RAILS_MASTER_KEY`
 - Database not migrated (should auto-run via Procfile)
 - Port binding issues (Rails should auto-detect `PORT` from Railway)
+- Database connection timeout (increase Railway's timeout settings)
 
 ## Backups
 

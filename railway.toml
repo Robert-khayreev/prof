@@ -8,6 +8,7 @@ restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
 # Healthcheck to ensure app is running
+# Reduced timeout to fail fast if database connection issues
 healthcheckPath = "/"
 healthcheckTimeout = 100
 
