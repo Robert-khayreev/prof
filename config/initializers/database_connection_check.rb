@@ -6,19 +6,33 @@ Rails.application.config.after_initialize do
   next unless Rails.env.production?
 
   begin
+    # Debug: Show all database-related env vars
+    Rails.logger.info "=" * 80
+    Rails.logger.info "DATABASE ENVIRONMENT CHECK"
+    Rails.logger.info "=" * 80
+    Rails.logger.info "Checking for database configuration..."
+    Rails.logger.info "  DATABASE_URL: #{ENV['DATABASE_URL'].present? ? '[SET]' : '[NOT SET]'}"
+    Rails.logger.info "  DB_HOST: #{ENV['DB_HOST'].present? ? "[SET: #{ENV['DB_HOST']}]" : '[NOT SET]'}"
+    Rails.logger.info "  RAILS_ENV: #{Rails.env}"
+    
     # Check if DATABASE_URL is present for Railway/Heroku deployments
     if ENV["DATABASE_URL"].blank? && ENV["DB_HOST"].blank?
-      Rails.logger.error "=" * 80
-      Rails.logger.error "DATABASE CONFIGURATION MISSING"
+      Rails.logger.error ""
+      Rails.logger.error "⚠️  DATABASE CONFIGURATION MISSING"
       Rails.logger.error "=" * 80
       Rails.logger.error ""
       Rails.logger.error "Neither DATABASE_URL nor DB_HOST environment variable is set."
       Rails.logger.error ""
       Rails.logger.error "If deploying to Railway:"
-      Rails.logger.error "  1. Go to your Railway project dashboard"
-      Rails.logger.error "  2. Click '+ New' → 'Database' → 'Add PostgreSQL'"
-      Rails.logger.error "  3. Railway will automatically set DATABASE_URL"
-      Rails.logger.error "  4. Redeploy your application"
+      Rails.logger.error "  1. Add PostgreSQL: Click '+ New' → 'Database' → 'Add PostgreSQL'"
+      Rails.logger.error "  2. Wait for PostgreSQL to finish provisioning (green status)"
+      Rails.logger.error "  3. Verify DATABASE_URL appears in your web service Variables tab"
+      Rails.logger.error "  4. IMPORTANT: Redeploy your web service after adding database!"
+      Rails.logger.error ""
+      Rails.logger.error "If you already added PostgreSQL but still see this error:"
+      Rails.logger.error "  • You may have set variables but NOT redeployed"
+      Rails.logger.error "  • Trigger a manual redeploy from Railway dashboard"
+      Rails.logger.error "  • Or push a new commit to trigger auto-deploy"
       Rails.logger.error ""
       Rails.logger.error "If deploying with Kamal:"
       Rails.logger.error "  1. Set DB_HOST in your config/deploy.yml"
@@ -32,14 +46,13 @@ Rails.application.config.after_initialize do
     end
 
     # Attempt to establish connection early
-    ActiveRecord::Base.logger.info "Checking database connection..."
-    ActiveRecord::Base.logger.info "  DATABASE_URL: #{ENV['DATABASE_URL'].present? ? '[SET]' : '[NOT SET]'}"
-    ActiveRecord::Base.logger.info "  DB_HOST: #{ENV['DB_HOST'] || '[NOT SET]'}"
+    Rails.logger.info "✓ Database configuration found, attempting connection..."
     
     # Try to connect with a short timeout
     ActiveRecord::Base.connection_pool.with_connection do |connection|
       connection.execute("SELECT 1")
-      ActiveRecord::Base.logger.info "Database connection successful!"
+      Rails.logger.info "✓ Database connection successful!"
+      Rails.logger.info "=" * 80
     end
 
   rescue PG::ConnectionBad, ActiveRecord::ConnectionNotEstablished => e

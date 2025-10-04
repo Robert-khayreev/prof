@@ -42,7 +42,10 @@ RAILS_MASTER_KEY=<paste your config/master.key content>
 RAILS_ENV=production
 ```
 
-**Important:** Get your `RAILS_MASTER_KEY` from `config/master.key` - never commit this file!
+**Important:** 
+- Get your `RAILS_MASTER_KEY` from `config/master.key` - never commit this file!
+- **After adding/changing variables, you MUST redeploy** for changes to take effect
+- Railway does NOT automatically restart your app when variables change
 
 ### 4. Deploy
 
@@ -182,37 +185,70 @@ Railway provides basic metrics:
 
 The application now **fails fast** with clear error messages instead of retrying indefinitely. You'll see one of these errors in the logs:
 
-#### **Error: "FATAL: Cannot connect to database"**
+#### **Error: "DATABASE CONFIGURATION MISSING"**
 
-This means the database connection details are missing or invalid. The logs will show:
+This means neither `DATABASE_URL` nor `DB_HOST` environment variable is set.
+
+```
+DATABASE CONFIGURATION MISSING
+Neither DATABASE_URL nor DB_HOST environment variable is set.
+```
+
+**How to fix:**
+
+1. **Add PostgreSQL Database to Railway**
+   - In Railway dashboard, click **"+ New"** → **"Database"** → **"Add PostgreSQL"**
+   - Railway will automatically provision it and set `DATABASE_URL`
+   
+2. **Verify Environment Variables**
+   - Click on your web service → Variables tab
+   - Confirm `DATABASE_URL` is present (auto-set by Railway)
+   - Add `RAILS_MASTER_KEY` from your local `config/master.key`
+   - Add `RAILS_ENV=production`
+
+3. **IMPORTANT: Redeploy After Setting Variables**
+   - Railway does **NOT** automatically restart when you change variables
+   - You **MUST** trigger a redeploy manually:
+     - Option 1: Go to your web service → click "⋮" menu → "Redeploy"
+     - Option 2: Push a new commit to trigger auto-deploy
+     - Option 3: Use Railway CLI: `railway up --detach`
+
+#### **Error: "DATABASE CONNECTION FAILED"**
+
+This means the database environment variable IS set, but the database is NOT accessible.
+
 ```
 DATABASE CONNECTION FAILED
+The database environment variable is SET, but the database is NOT accessible.
 Error: PG::ConnectionBad - ...
-Environment variables:
-  DATABASE_URL: [SET] or [NOT SET]
-  DB_HOST: [NOT SET]
 ```
 
 **How to fix:**
 
 1. **Check PostgreSQL Service Status**
-   - In Railway dashboard, verify your PostgreSQL service is **running** (green status)
-   - If it's not running, click on it and start it
+   - In Railway dashboard, verify your PostgreSQL service is **RUNNING** (green status)
+   - If stopped or errored, click on it and restart it
 
-2. **Verify Environment Variables**
-   - Click on your web service → Variables tab
-   - Ensure `DATABASE_URL` is present (Railway should auto-set this)
-   - Ensure `RAILS_MASTER_KEY` is set correctly
-   - Add `RAILS_ENV=production` if not present
+2. **Wait for PostgreSQL to Start**
+   - PostgreSQL may take 30-60 seconds to fully start up
+   - Don't deploy the web service until PostgreSQL shows green/active status
 
-3. **Restart Services in Order**
+3. **Verify Services Are in Same Project**
+   - Both PostgreSQL and web service must be in the **same Railway project**
+   - If not, remove and re-add PostgreSQL to the correct project
+
+4. **Check PostgreSQL Logs**
+   - Click on PostgreSQL service → Logs tab
+   - Look for startup errors or crashes
+
+5. **Restart Services in Order**
    ```
-   1. Stop web service
-   2. Ensure PostgreSQL is running
+   1. Ensure PostgreSQL is running and stable (wait 60 seconds after start)
+   2. Stop web service if it's running
    3. Redeploy web service
    ```
 
-#### **Error: "FATAL: Database does not exist"**
+#### **Error: "DATABASE DOES NOT EXIST"**
 
 The database connection works, but the database hasn't been created yet. This should be handled automatically by the `release` command in `Procfile`, but if it fails:
 
@@ -229,16 +265,6 @@ railway run rails db:prepare
 ```
 
 Then redeploy your application.
-
-#### **Error: "DATABASE_URL or DB_HOST environment variable is required"**
-
-This means no database connection details are configured at all.
-
-**How to fix:**
-1. In Railway dashboard, add a **PostgreSQL database** to your project
-2. Click "+ New" → "Database" → "Add PostgreSQL"
-3. Railway will automatically set the `DATABASE_URL` variable
-4. Redeploy your web service
 
 ### Build Fails
 
