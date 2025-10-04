@@ -16,7 +16,7 @@ Rails.application.config.after_initialize do
     Rails.logger.info "  RAILS_ENV: #{Rails.env}"
     
     # Check if DATABASE_URL is present for Railway/Heroku deployments
-    if ENV["DATABASE_URL"].blank? && ENV["DB_HOST"].blank?
+    if ENV["DATABASE_URL"].blank? || ENV["DB_HOST"].blank?
       Rails.logger.error ""
       Rails.logger.error "⚠️  DATABASE CONFIGURATION MISSING"
       Rails.logger.error "=" * 80
