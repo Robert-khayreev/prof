@@ -1,0 +1,250 @@
+<div class="tinder-container" data-profile-id="<%= @profile.id %>">
+  <div class="tinder-header">
+    <%= link_to "← Back", spectator_index_path, class: "back-link" %>
+    <div class="timer">Time: <span id="time-display">0s</span></div>
+  </div>
+  
+  <div class="profile-card-wrapper">
+    <div class="profile-card-large" id="profileCard">
+      <div class="profile-images-carousel">
+        <% if @profile.images.attached? %>
+          <% if @profile.images.count > 1 %>
+            <!-- Progress bars at top (Tinder style) -->
+            <div class="image-progress-bars">
+              <% @profile.images.count.times do |i| %>
+                <div class="progress-bar <%= 'active' if i == 0 %>" data-index="<%= i %>"></div>
+              <% end %>
+            </div>
+          <% end %>
+          
+          <% @profile.images.each_with_index do |image, index| %>
+            <div class="carousel-image <%= 'active' if index == 0 %>" data-index="<%= index %>">
+              <%= image_tag image, alt: @profile.name, class: "profile-main-image" %>
+            </div>
+          <% end %>
+          
+          <% if @profile.images.count > 1 %>
+            <!-- Invisible tap zones for navigation (Tinder style) -->
+            <div class="image-nav-zone nav-zone-left" onclick="previousImage(event)"></div>
+            <div class="image-nav-zone nav-zone-right" onclick="nextImage(event)"></div>
+          <% end %>
+        <% else %>
+          <div class="no-image-large">No Image</div>
+        <% end %>
+      </div>
+      
+      <div class="profile-content">
+        <div class="profile-header">
+          <h1><%= @profile.name %>, <%= @profile.age %></h1>
+          <div class="profile-details">
+            <% if @profile.gender_identity.present? %>
+              <span class="detail-item">⚧️ <%= @profile.gender_identity.capitalize %></span>
+            <% end %>
+            <% if @profile.height.present? %>
+              <span class="detail-item">📏 <%= @profile.height %>cm</span>
+            <% end %>
+            <% if @profile.income_level.present? %>
+              <span class="detail-item">💰 $<%= @profile.income_level.gsub('k', 'K') %></span>
+            <% end %>
+          </div>
+        </div>
+        
+        <% if @profile.description.present? %>
+          <div class="profile-bio">
+            <h3>About</h3>
+            <p><%= simple_format(@profile.description) %></p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  
+  <div class="swipe-actions">
+    <button class="swipe-button swipe-left" onclick="swipeLeft()">
+      <span class="button-icon">✕</span>
+      <span class="button-text">Nope</span>
+    </button>
+    
+    <button class="swipe-button swipe-right" onclick="swipeRight()">
+      <span class="button-icon">♥</span>
+      <span class="button-text">Like</span>
+    </button>
+  </div>
+  
+  <div class="swipe-overlay left-overlay">NOPE</div>
+  <div class="swipe-overlay right-overlay">LIKE</div>
+</div>
+
+<script>
+  let startTime = Date.now();
+  let timeInterval;
+  let currentImageIndex = 0;
+  let maxScrollDepth = 0;
+  const profileId = <%= @profile.id %>;
+  
+  // Track time spent
+  function updateTimer() {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    document.getElementById('time-display').textContent = elapsed + 's';
+  }
+  
+  timeInterval = setInterval(updateTimer, 1000);
+  
+  // Track scroll depth
+  window.addEventListener('scroll', function() {
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollableHeight = documentHeight - windowHeight;
+    
+    // If page isn't scrollable, depth is 0; otherwise calculate percentage
+    const scrollPercentage = scrollableHeight > 0 
+      ? Math.round((scrollTop / scrollableHeight) * 100) 
+      : 0;
+    
+    if (scrollPercentage > maxScrollDepth) {
+      maxScrollDepth = Math.min(100, scrollPercentage); // Cap at 100%
+    }
+  });
+  
+  // Carousel functions (Tinder style)
+  function nextImage(event) {
+    if (event) event.stopPropagation();
+    
+    const images = document.querySelectorAll('.carousel-image');
+    const progressBars = document.querySelectorAll('.progress-bar');
+    
+    if (images.length <= 1) return;
+    
+    images[currentImageIndex].classList.remove('active');
+    if (progressBars.length > 0) {
+      progressBars[currentImageIndex].classList.remove('active');
+    }
+    
+    currentImageIndex = (currentImageIndex + 1) % images.length;
+    
+    images[currentImageIndex].classList.add('active');
+    if (progressBars.length > 0) {
+      progressBars[currentImageIndex].classList.add('active');
+    }
+  }
+  
+  function previousImage(event) {
+    if (event) event.stopPropagation();
+    
+    const images = document.querySelectorAll('.carousel-image');
+    const progressBars = document.querySelectorAll('.progress-bar');
+    
+    if (images.length <= 1) return;
+    
+    images[currentImageIndex].classList.remove('active');
+    if (progressBars.length > 0) {
+      progressBars[currentImageIndex].classList.remove('active');
+    }
+    
+    currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+    
+    images[currentImageIndex].classList.add('active');
+    if (progressBars.length > 0) {
+      progressBars[currentImageIndex].classList.add('active');
+    }
+  }
+  
+    // Track interaction
+    function trackInteraction(action) {
+      clearInterval(timeInterval);
+      
+      const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+      
+      // Ensure scroll depth is valid (0-100)
+      const finalScrollDepth = Math.max(0, Math.min(100, maxScrollDepth || 0));
+      
+      console.log('Tracking:', action, 'Profile:', profileId, 'Time:', timeSpent, 'Scroll:', finalScrollDepth, 'Image:', currentImageIndex);
+      
+      fetch(`/spectator/track/${profileId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+          action_type: action,
+          time_spent: timeSpent,
+          scroll_depth: finalScrollDepth,
+          image_index: currentImageIndex
+        })
+      })
+      .then(response => {
+        console.log('Track response:', response.status);
+        if (!response.ok) {
+          console.error('Track failed:', response.status);
+        }
+      })
+      .catch(error => {
+        console.error('Track error:', error);
+      });
+    }
+  
+  function swipeLeft() {
+    const card = document.querySelector('.profile-card-wrapper');
+    const overlay = document.querySelector('.left-overlay');
+    
+    overlay.classList.add('active');
+    card.style.transform = 'translateX(-150%) rotate(-30deg)';
+    card.style.opacity = '0';
+    
+    trackInteraction('left_swipe');
+    
+    setTimeout(() => {
+      window.location.href = '/spectator/index';
+    }, 500);
+  }
+  
+  function swipeRight() {
+    const card = document.querySelector('.profile-card-wrapper');
+    const overlay = document.querySelector('.right-overlay');
+    
+    overlay.classList.add('active');
+    card.style.transform = 'translateX(150%) rotate(30deg)';
+    card.style.opacity = '0';
+    
+    trackInteraction('right_swipe');
+    
+    setTimeout(() => {
+      window.location.href = '/spectator/index';
+    }, 500);
+  }
+  
+  // Keyboard shortcuts
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowLeft') {
+      swipeLeft();
+    } else if (e.key === 'ArrowRight') {
+      swipeRight();
+    }
+  });
+  
+  // Touch swipe support
+  let touchStartX = 0;
+  let touchEndX = 0;
+  
+  const card = document.querySelector('.profile-card-wrapper');
+  
+  card.addEventListener('touchstart', function(e) {
+    touchStartX = e.changedTouches[0].screenX;
+  }, false);
+  
+  card.addEventListener('touchend', function(e) {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  }, false);
+  
+  function handleSwipe() {
+    if (touchEndX < touchStartX - 50) {
+      swipeLeft();
+    }
+    if (touchEndX > touchStartX + 50) {
+      swipeRight();
+    }
+  }
+</script>

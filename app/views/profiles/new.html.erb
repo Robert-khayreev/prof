@@ -1,0 +1,89 @@
+<div class="form-container">
+  <h1>Create New Profile</h1>
+  
+  <%= form_with model: @profile, local: true, multipart: true do |f| %>
+    <% if @profile.errors.any? %>
+      <div class="errors">
+        <h3><%= pluralize(@profile.errors.count, "error") %> prohibited this profile from being saved:</h3>
+        <ul>
+          <% @profile.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+    
+    <div class="form-group">
+      <%= f.label :name %>
+      <%= f.text_field :name, class: "form-control", required: true %>
+    </div>
+    
+    <div class="form-group">
+      <%= f.label :age %>
+      <%= f.number_field :age, class: "form-control", min: 18, max: 99, required: true %>
+    </div>
+    
+    <div class="form-group">
+      <%= f.label :gender_identity, "Gender Identity" %>
+      <%= f.select :gender_identity, 
+          [
+            ['Prefer not to say', ''],
+            ['Male', 'male'],
+            ['Female', 'female'],
+            ['Non-binary', 'non-binary'],
+            ['Genderqueer', 'genderqueer'],
+            ['Agender', 'agender'],
+            ['Other', 'other']
+          ], 
+          {}, 
+          class: "form-control" %>
+      <small class="form-text">Optional</small>
+    </div>
+    
+    <div class="form-group">
+      <%= f.label :height, "Height (cm)" %>
+      <%= f.number_field :height, class: "form-control", min: 100, max: 250, placeholder: "e.g. 175" %>
+      <small class="form-text">Optional - height in centimeters</small>
+    </div>
+    
+    <div class="form-group">
+      <%= f.label :income_level, "Income Level" %>
+      <%= f.select :income_level, 
+          [
+            ['Prefer not to say', ''],
+            ['$0 - $30k', '0-30k'],
+            ['$30k - $50k', '30k-50k'],
+            ['$50k - $75k', '50k-75k'],
+            ['$75k - $100k', '75k-100k'],
+            ['$100k - $150k', '100k-150k'],
+            ['$150k - $200k', '150k-200k'],
+            ['$200k+', '200k+']
+          ], 
+          {}, 
+          class: "form-control" %>
+      <small class="form-text">Optional</small>
+    </div>
+    
+    <div class="form-group">
+      <%= f.label :description, "Bio" %>
+      <%= f.text_area :description, class: "form-control", rows: 5, maxlength: 500, placeholder: "Tell others about yourself..." %>
+      <small class="form-text">Maximum 500 characters</small>
+    </div>
+    
+    <div class="form-group">
+      <%= f.label :images, "Upload Photos" %>
+      <%= f.file_field :images, multiple: true, accept: "image/*", class: "form-control" %>
+      <small class="form-text">You can select multiple images</small>
+    </div>
+    
+    <div class="form-group checkbox">
+      <%= f.check_box :active, checked: true %>
+      <%= f.label :active, "Make profile active (visible in spectator mode)" %>
+    </div>
+    
+    <div class="form-actions">
+      <%= f.submit "Create Profile", class: "btn btn-primary" %>
+      <%= link_to "Cancel", profiles_path, class: "btn btn-secondary" %>
+    </div>
+  <% end %>
+</div>

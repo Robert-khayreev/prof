@@ -1,0 +1,43 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <h1>Sign Up</h1>
+    
+    <%= form_with model: @user, url: signup_path, local: true do |f| %>
+      <% if @user.errors.any? %>
+        <div class="errors">
+          <h3><%= pluralize(@user.errors.count, "error") %> prohibited this account from being saved:</h3>
+          <ul>
+            <% @user.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+      
+      <div class="form-group">
+        <%= f.label :email %>
+        <%= f.email_field :email, class: "form-control", placeholder: "your@email.com", autofocus: true, required: true %>
+      </div>
+      
+      <div class="form-group">
+        <%= f.label :password %>
+        <%= f.password_field :password, class: "form-control", placeholder: "At least 6 characters", required: true %>
+        <small class="form-text">Minimum 6 characters</small>
+      </div>
+      
+      <div class="form-group">
+        <%= f.label :password_confirmation, "Confirm Password" %>
+        <%= f.password_field :password_confirmation, class: "form-control", required: true %>
+      </div>
+      
+      <div class="form-actions">
+        <%= f.submit "Create Account", class: "btn btn-primary btn-block" %>
+      </div>
+    <% end %>
+    
+    <div class="auth-footer">
+      <p>Already have an account? <%= link_to "Log in", login_path %></p>
+      <%= link_to "← Back to Home", root_path, class: "back-link" %>
+    </div>
+  </div>
+</div>

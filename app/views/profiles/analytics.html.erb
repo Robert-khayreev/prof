@@ -1,0 +1,178 @@
+<div class="analytics-container">
+  <div class="header">
+    <h1>Analytics for <%= @profile.name %></h1>
+    <%= link_to "Back to Profiles", profiles_path, class: "btn btn-secondary" %>
+  </div>
+  
+  <div class="stats-overview">
+    <div class="stat-card">
+      <div class="stat-icon">👁️</div>
+      <div class="stat-content">
+        <div class="stat-value"><%= @total_views %></div>
+        <div class="stat-label">Total Views</div>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">👍</div>
+      <div class="stat-content">
+        <div class="stat-value"><%= @right_swipes %></div>
+        <div class="stat-label">Right Swipes</div>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">👎</div>
+      <div class="stat-content">
+        <div class="stat-value"><%= @left_swipes %></div>
+        <div class="stat-label">Left Swipes</div>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">📈</div>
+      <div class="stat-content">
+        <div class="stat-value"><%= @swipe_right_rate %>%</div>
+        <div class="stat-label">Success Rate</div>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">⏱️</div>
+      <div class="stat-content">
+        <div class="stat-value"><%= @average_time_spent %>s</div>
+        <div class="stat-label">Avg Time Spent</div>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">📜</div>
+      <div class="stat-content">
+        <div class="stat-value"><%= @average_scroll_depth %>%</div>
+        <div class="stat-label">Avg Scroll Depth</div>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">🖼️</div>
+      <div class="stat-content">
+        <div class="stat-value"><%= @profile.average_images_viewed %></div>
+        <div class="stat-label">Avg Photos Viewed</div>
+      </div>
+    </div>
+  </div>
+  
+  <% if @profile.average_image_index_for_right_swipes || @profile.average_image_index_for_left_swipes %>
+    <div class="image-analytics-section">
+      <h2>Photo Performance</h2>
+      <div class="stats-overview">
+        <% if @profile.average_image_index_for_right_swipes %>
+          <div class="stat-card">
+            <div class="stat-icon">👍📷</div>
+            <div class="stat-content">
+              <div class="stat-value">Photo #<%= (@profile.average_image_index_for_right_swipes + 1).round %></div>
+              <div class="stat-label">Avg Right Swipe Position</div>
+              <div class="stat-hint">Viewers saw <%= (@profile.average_image_index_for_right_swipes + 1).round(1) %> photos before swiping right</div>
+            </div>
+          </div>
+        <% end %>
+        
+        <% if @profile.average_image_index_for_left_swipes %>
+          <div class="stat-card">
+            <div class="stat-icon">👎📷</div>
+            <div class="stat-content">
+              <div class="stat-value">Photo #<%= (@profile.average_image_index_for_left_swipes + 1).round %></div>
+              <div class="stat-label">Avg Left Swipe Position</div>
+              <div class="stat-hint">Viewers saw <%= (@profile.average_image_index_for_left_swipes + 1).round(1) %> photos before swiping left</div>
+            </div>
+          </div>
+        <% end %>
+        
+        <% if @profile.images.attached? %>
+          <div class="stat-card">
+            <div class="stat-icon">📸</div>
+            <div class="stat-content">
+              <div class="stat-value"><%= @profile.images.count %></div>
+              <div class="stat-label">Total Photos</div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+      
+      <% distribution = @profile.image_index_distribution %>
+      <% if distribution.any? %>
+        <div class="image-distribution">
+          <h3>Swipe Distribution by Photo</h3>
+          <table class="interactions-table">
+            <thead>
+              <tr>
+                <th>Photo Position</th>
+                <th>Right Swipes</th>
+                <th>Left Swipes</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% max_index = distribution.keys.map(&:first).max %>
+              <% (0..max_index).each do |idx| %>
+                <% right = distribution[[idx, 'right_swipe']] || 0 %>
+                <% left = distribution[[idx, 'left_swipe']] || 0 %>
+                <% total = right + left %>
+                <% if total > 0 %>
+                  <tr>
+                    <td><strong>Photo #<%= idx + 1 %></strong></td>
+                    <td><span class="badge badge-success"><%= right %> (<%= total > 0 ? ((right.to_f / total * 100).round) : 0 %>%)</span></td>
+                    <td><span class="badge badge-danger"><%= left %> (<%= total > 0 ? ((left.to_f / total * 100).round) : 0 %>%)</span></td>
+                    <td><%= total %></td>
+                  </tr>
+                <% end %>
+              <% end %>
+            </tbody>
+          </table>
+          <p class="stat-hint">This shows which photo viewers were looking at when they swiped</p>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+  
+  <div class="interactions-section">
+    <h2>Recent Interactions</h2>
+    
+    <% if @interactions.any? %>
+      <table class="interactions-table">
+        <thead>
+          <tr>
+            <th>Action</th>
+            <th>Photo Viewed</th>
+            <th>Time Spent (s)</th>
+            <th>Scroll Depth (%)</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @interactions.each do |interaction| %>
+            <tr>
+              <td>
+                <span class="badge badge-<%= interaction.action == 'right_swipe' ? 'success' : (interaction.action == 'left_swipe' ? 'danger' : 'info') %>">
+                  <%= interaction.action.humanize %>
+                </span>
+              </td>
+              <td>
+                <% if interaction.image_index.present? %>
+                  Photo #<%= interaction.image_index + 1 %>
+                <% else %>
+                  N/A
+                <% end %>
+              </td>
+              <td><%= interaction.time_spent || 'N/A' %></td>
+              <td><%= interaction.scroll_depth || 'N/A' %></td>
+              <td><%= interaction.created_at.strftime("%b %d, %Y %H:%M") %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="empty-state">No interactions yet.</p>
+    <% end %>
+  </div>
+</div>

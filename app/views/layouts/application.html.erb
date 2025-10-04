@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Prof" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body>
+    <nav class="main-nav">
+      <div class="nav-container">
+        <div class="nav-brand">
+          <%= link_to root_path do %>
+            <span class="brand-logo">💘</span>
+            <span class="brand-name">Prof</span>
+          <% end %>
+        </div>
+        
+        <div class="nav-links">
+          <%= link_to spectator_index_path, class: "nav-link" do %>
+            <span class="nav-icon">🔍</span>
+            <span>Spectator</span>
+          <% end %>
+          
+          <% if logged_in? %>
+            <%= link_to profiles_path, class: "nav-link" do %>
+              <span class="nav-icon">👤</span>
+              <span>My Profiles</span>
+            <% end %>
+            
+            <div class="nav-divider"></div>
+            
+            <span class="nav-user-email"><%= current_user.email %></span>
+            <%= button_to logout_path, method: :delete, class: "nav-link logout-btn" do %>
+              <span class="nav-icon">🚪</span>
+              <span>Logout</span>
+            <% end %>
+          <% else %>
+            <%= link_to login_path, class: "nav-link" do %>
+              <span class="nav-icon">🔑</span>
+              <span>Login</span>
+            <% end %>
+            <%= link_to signup_path, class: "nav-link signup-btn" do %>
+              <span class="nav-icon">✨</span>
+              <span>Sign Up</span>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </nav>
+    
+    <main class="main-content">
+      <%= yield %>
+    </main>
+  </body>
+</html>

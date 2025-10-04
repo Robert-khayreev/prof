@@ -1,0 +1,32 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <h1>Log In</h1>
+    
+    <% if flash[:alert] %>
+      <div class="alert alert-danger">
+        <%= flash[:alert] %>
+      </div>
+    <% end %>
+    
+    <%= form_with url: login_path, local: true do |f| %>
+      <div class="form-group">
+        <%= f.label :email %>
+        <%= f.email_field :email, class: "form-control", placeholder: "your@email.com", autofocus: true, required: true %>
+      </div>
+      
+      <div class="form-group">
+        <%= f.label :password %>
+        <%= f.password_field :password, class: "form-control", required: true %>
+      </div>
+      
+      <div class="form-actions">
+        <%= f.submit "Log In", class: "btn btn-primary btn-block" %>
+      </div>
+    <% end %>
+    
+    <div class="auth-footer">
+      <p>Don't have an account? <%= link_to "Sign up", signup_path %></p>
+      <%= link_to "← Back to Home", root_path, class: "back-link" %>
+    </div>
+  </div>
+</div>

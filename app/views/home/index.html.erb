@@ -1,0 +1,34 @@
+<div class="home-container">
+  <div class="hero-section">
+    <h1>Dating Profile Performance Analyzer</h1>
+    <p class="subtitle">Test and optimize your dating profile with real metrics</p>
+    
+    <div class="cta-buttons">
+      <% if logged_in? %>
+        <%= link_to "Manage My Profiles", profiles_path, class: "btn btn-primary" %>
+        <%= link_to "Spectator Mode", spectator_index_path, class: "btn btn-secondary" %>
+      <% else %>
+        <%= link_to "Sign Up", signup_path, class: "btn btn-primary" %>
+        <%= link_to "Log In", login_path, class: "btn btn-secondary" %>
+        <%= link_to "Spectator Mode", spectator_index_path, class: "btn btn-secondary" %>
+      <% end %>
+    </div>
+  </div>
+  
+  <div class="features">
+    <div class="feature">
+      <h3>📊 Analytics Dashboard</h3>
+      <p>Track right/left swipes, views, time spent, and scroll depth</p>
+    </div>
+    
+    <div class="feature">
+      <h3>🎭 Multiple Profiles</h3>
+      <p>Test different photos, bios, and approaches</p>
+    </div>
+    
+    <div class="feature">
+      <h3>👀 Spectator Mode</h3>
+      <p>View profiles anonymously and provide data</p>
+    </div>
+  </div>
+</div>
