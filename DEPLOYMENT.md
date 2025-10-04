@@ -1,6 +1,28 @@
 # Deployment Configuration Guide
 
-This guide covers the necessary steps to configure and deploy the application to production using Kamal.
+This application supports two deployment methods:
+
+## 🚀 Choose Your Deployment Method
+
+### Option 1: Railway (Recommended for Quick Start)
+**Platform-as-a-Service - No server management required**
+- ⚡ Deploy in 5 minutes
+- 🔧 Zero configuration needed
+- 💰 Free tier available, ~$20-50/month for production
+- 📖 **[See Railway Deployment Guide →](RAILWAY_DEPLOYMENT.md)**
+
+### Option 2: Kamal (Self-Hosted)
+**Full control deployment - Requires server management**
+- 💪 Complete control over infrastructure
+- 💰 Lower cost (~$5-20/month for VPS)
+- 🛠️ More setup required
+- 📖 **Continue reading below for Kamal setup**
+
+---
+
+# Kamal Deployment Guide
+
+This guide covers the necessary steps to configure and deploy the application to production using Kamal (self-hosted).
 
 ## Prerequisites
 

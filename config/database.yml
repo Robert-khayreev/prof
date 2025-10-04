@@ -22,8 +22,14 @@ test:
 
 
 # Production uses PostgreSQL with multiple databases
+# Supports both Railway (DATABASE_URL) and Kamal (individual env vars)
 production:
   primary: &production_primary
+    <% if ENV["DATABASE_URL"].present? %>
+    # Railway/Heroku style - uses DATABASE_URL
+    url: <%= ENV["DATABASE_URL"] %>
+    <% else %>
+    # Kamal style - uses individual env vars
     adapter: postgresql
     encoding: unicode
     pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
@@ -32,15 +38,28 @@ production:
     database: <%= ENV.fetch("DB_NAME") { "prof_production" } %>
     username: <%= ENV.fetch("DB_USER") { "prof" } %>
     password: <%= ENV["POSTGRES_PASSWORD"] %>
+    <% end %>
   cache:
     <<: *production_primary
+    <% if ENV["DATABASE_URL"].present? %>
+    database: <%= URI.parse(ENV["DATABASE_URL"]).path.sub("/", "") + "_cache" rescue "prof_production_cache" %>
+    <% else %>
     database: <%= ENV.fetch("DB_NAME_CACHE") { "prof_production_cache" } %>
+    <% end %>
     migrations_paths: db/cache_migrate
   queue:
     <<: *production_primary
+    <% if ENV["DATABASE_URL"].present? %>
+    database: <%= URI.parse(ENV["DATABASE_URL"]).path.sub("/", "") + "_queue" rescue "prof_production_queue" %>
+    <% else %>
     database: <%= ENV.fetch("DB_NAME_QUEUE") { "prof_production_queue" } %>
+    <% end %>
     migrations_paths: db/queue_migrate
   cable:
     <<: *production_primary
+    <% if ENV["DATABASE_URL"].present? %>
+    database: <%= URI.parse(ENV["DATABASE_URL"]).path.sub("/", "") + "_cable" rescue "prof_production_cable" %>
+    <% else %>
     database: <%= ENV.fetch("DB_NAME_CABLE") { "prof_production_cable" } %>
+    <% end %>
     migrations_paths: db/cable_migrate
