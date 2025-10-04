@@ -8,12 +8,33 @@ Rails.application.config.after_initialize do
   begin
     # Check if DATABASE_URL is present for Railway/Heroku deployments
     if ENV["DATABASE_URL"].blank? && ENV["DB_HOST"].blank?
-      raise "DATABASE_URL or DB_HOST environment variable is required for production deployment. " \
-            "Please ensure your database service is properly configured and environment variables are set."
+      Rails.logger.error "=" * 80
+      Rails.logger.error "DATABASE CONFIGURATION MISSING"
+      Rails.logger.error "=" * 80
+      Rails.logger.error ""
+      Rails.logger.error "Neither DATABASE_URL nor DB_HOST environment variable is set."
+      Rails.logger.error ""
+      Rails.logger.error "If deploying to Railway:"
+      Rails.logger.error "  1. Go to your Railway project dashboard"
+      Rails.logger.error "  2. Click '+ New' → 'Database' → 'Add PostgreSQL'"
+      Rails.logger.error "  3. Railway will automatically set DATABASE_URL"
+      Rails.logger.error "  4. Redeploy your application"
+      Rails.logger.error ""
+      Rails.logger.error "If deploying with Kamal:"
+      Rails.logger.error "  1. Set DB_HOST in your config/deploy.yml"
+      Rails.logger.error "  2. Ensure all DB_* environment variables are configured"
+      Rails.logger.error ""
+      Rails.logger.error "If testing locally:"
+      Rails.logger.error "  export DATABASE_URL='postgresql://localhost/prof_production'"
+      Rails.logger.error "=" * 80
+      
+      raise "FATAL: DATABASE_URL or DB_HOST environment variable is required. See logs above for setup instructions."
     end
 
     # Attempt to establish connection early
     ActiveRecord::Base.logger.info "Checking database connection..."
+    ActiveRecord::Base.logger.info "  DATABASE_URL: #{ENV['DATABASE_URL'].present? ? '[SET]' : '[NOT SET]'}"
+    ActiveRecord::Base.logger.info "  DB_HOST: #{ENV['DB_HOST'] || '[NOT SET]'}"
     
     # Try to connect with a short timeout
     ActiveRecord::Base.connection_pool.with_connection do |connection|
@@ -28,21 +49,29 @@ Rails.application.config.after_initialize do
     Rails.logger.error "=" * 80
     Rails.logger.error "Error: #{e.class} - #{e.message}"
     Rails.logger.error ""
+    Rails.logger.error "The database environment variable is SET, but the database is NOT accessible."
+    Rails.logger.error ""
     Rails.logger.error "Environment variables:"
     Rails.logger.error "  DATABASE_URL: #{ENV['DATABASE_URL'].present? ? '[SET]' : '[NOT SET]'}"
     Rails.logger.error "  DB_HOST: #{ENV['DB_HOST'] || '[NOT SET]'}"
     Rails.logger.error "  RAILS_ENV: #{Rails.env}"
     Rails.logger.error ""
-    Rails.logger.error "Possible causes:"
-    Rails.logger.error "  1. PostgreSQL service is not running"
-    Rails.logger.error "  2. DATABASE_URL environment variable is incorrect"
-    Rails.logger.error "  3. Database credentials are invalid"
-    Rails.logger.error "  4. Network connectivity issues"
-    Rails.logger.error "  5. Database host is not accessible"
+    Rails.logger.error "If deploying to Railway:"
+    Rails.logger.error "  1. Check that your PostgreSQL service is RUNNING (green status)"
+    Rails.logger.error "  2. Go to PostgreSQL service → click 'Restart' if needed"
+    Rails.logger.error "  3. Verify both services are in the SAME Railway project"
+    Rails.logger.error "  4. Check PostgreSQL service logs for errors"
+    Rails.logger.error "  5. Wait 30-60 seconds after starting PostgreSQL before deploying web service"
+    Rails.logger.error ""
+    Rails.logger.error "Other possible causes:"
+    Rails.logger.error "  • DATABASE_URL format is incorrect"
+    Rails.logger.error "  • Database credentials are invalid"
+    Rails.logger.error "  • Network connectivity issues between services"
+    Rails.logger.error "  • PostgreSQL hasn't finished starting up yet"
     Rails.logger.error "=" * 80
 
     # Raise the exception to stop the application from starting
-    raise "FATAL: Cannot connect to database. Application startup aborted. See logs above for details."
+    raise "FATAL: Cannot connect to database. Configuration is present but database is not accessible. See logs above for troubleshooting steps."
 
   rescue ActiveRecord::NoDatabaseError => e
     Rails.logger.error "=" * 80
