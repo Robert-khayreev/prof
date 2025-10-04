@@ -11,16 +11,49 @@ Rails.application.config.after_initialize do
     Rails.logger.info "DATABASE ENVIRONMENT CHECK"
     Rails.logger.info "=" * 80
     Rails.logger.info "Checking for database configuration..."
+    Rails.logger.info ""
+    
+    # Check for Railway-specific environment variables
+    Rails.logger.info "RAILWAY-SPECIFIC ENVIRONMENT VARIABLES:"
+    railway_vars = ENV.keys.select { |k| k.start_with?('RAILWAY_') }
+    if railway_vars.any?
+      railway_vars.sort.each do |key|
+        Rails.logger.info "  #{key}: #{ENV[key]}"
+      end
+    else
+      Rails.logger.info "  [No RAILWAY_* variables found - might not be running on Railway]"
+    end
+    
+    Rails.logger.info ""
+    Rails.logger.info "DATABASE CONFIGURATION:"
     Rails.logger.info "  DATABASE_URL: #{ENV['DATABASE_URL'].present? ? '[SET]' : '[NOT SET]'}"
+    if ENV['DATABASE_URL'].present?
+      # Show DATABASE_URL without revealing the password
+      begin
+        uri = URI.parse(ENV['DATABASE_URL'])
+        safe_url = "#{uri.scheme}://#{uri.user}:[REDACTED]@#{uri.host}:#{uri.port}#{uri.path}"
+        Rails.logger.info "  DATABASE_URL (masked): #{safe_url}"
+      rescue => e
+        Rails.logger.info "  DATABASE_URL (parse error): #{e.message}"
+      end
+    end
     Rails.logger.info "  DB_HOST: #{ENV['DB_HOST'].present? ? "[SET: #{ENV['DB_HOST']}]" : '[NOT SET]'}"
     Rails.logger.info "  RAILS_ENV: #{Rails.env}"
+    Rails.logger.info "  RAILS_MASTER_KEY: #{ENV['RAILS_MASTER_KEY'].present? ? '[SET]' : '[NOT SET]'}"
+    Rails.logger.info "  PORT: #{ENV['PORT'] || '[NOT SET]'}"
     
     # Print all environment variables
     Rails.logger.info ""
-    Rails.logger.info "ALL ENVIRONMENT VARIABLES:"
+    Rails.logger.info "ALL ENVIRONMENT VARIABLES (#{ENV.keys.count} total):"
     Rails.logger.info "-" * 80
     ENV.keys.sort.each do |key|
-      Rails.logger.info "  #{key}: #{ENV[key]}"
+      # Redact sensitive values
+      value = if key.match?(/PASSWORD|SECRET|KEY|TOKEN/i) && ENV[key].present?
+        '[REDACTED]'
+      else
+        ENV[key]
+      end
+      Rails.logger.info "  #{key}: #{value}"
     end
     Rails.logger.info "-" * 80
     

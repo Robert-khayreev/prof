@@ -42,6 +42,20 @@ RUN bundle install && \
 # Copy application code
 COPY . .
 
+# Create a debug script to check environment variables
+RUN echo '#!/bin/bash' > /rails/bin/debug-env && \
+    echo 'echo "=== ENVIRONMENT VARIABLES DEBUG ==="' >> /rails/bin/debug-env && \
+    echo 'echo "Total env vars: $(env | wc -l)"' >> /rails/bin/debug-env && \
+    echo 'echo "RAILWAY_* vars:"' >> /rails/bin/debug-env && \
+    echo 'env | grep "^RAILWAY_" | sort || echo "No RAILWAY_* variables found"' >> /rails/bin/debug-env && \
+    echo 'echo "DATABASE_URL: ${DATABASE_URL:+[SET]}${DATABASE_URL:-[NOT SET]}"' >> /rails/bin/debug-env && \
+    echo 'echo "RAILS_ENV: ${RAILS_ENV:-[NOT SET]}"' >> /rails/bin/debug-env && \
+    echo 'echo "PORT: ${PORT:-[NOT SET]}"' >> /rails/bin/debug-env && \
+    echo 'echo "RAILS_MASTER_KEY: ${RAILS_MASTER_KEY:+[SET]}${RAILS_MASTER_KEY:-[NOT SET]}"' >> /rails/bin/debug-env && \
+    echo 'echo "=== ALL ENV VARS ==="' >> /rails/bin/debug-env && \
+    echo 'env | sort' >> /rails/bin/debug-env && \
+    chmod +x /rails/bin/debug-env
+
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
 

@@ -181,6 +181,39 @@ Railway provides basic metrics:
 
 ## Troubleshooting
 
+### Missing Railway Environment Variables
+
+If you see very few or no `RAILWAY_*` environment variables in your logs, this indicates that Railway is not properly injecting environment variables into your container.
+
+**How to fix:**
+
+1. **Verify Railway Project Setup**
+   - Make sure you're deploying from Railway dashboard (not locally)
+   - Check that your service is properly linked to your GitHub repository
+
+2. **Check Variable Configuration**
+   - Go to your Railway project → Web service → Variables tab
+   - Verify you have these variables set:
+     - `RAILS_ENV=production`
+     - `RAILS_MASTER_KEY=<your-master-key>`
+   - Railway automatically provides: `DATABASE_URL`, `PORT`, and various `RAILWAY_*` variables
+
+3. **Redeploy After Setting Variables**
+   - **CRITICAL:** Railway does NOT auto-restart when variables change
+   - Click "⋮" menu → "Redeploy" to trigger a new deployment
+   - Or push a new commit to GitHub
+
+4. **Check Build vs Runtime Variables**
+   - Some variables are only available at runtime, not during build
+   - The database check runs at runtime, so variables should be visible
+   - Check both your "Build Logs" and "Deploy Logs" tabs
+
+5. **Debug Environment Variables**
+   - The Dockerfile now includes a debug script that runs on startup
+   - Look for "=== DOCKER ENTRYPOINT DEBUG ===" in your Railway logs
+   - This will show all environment variables available to the container
+   - You can also run manually: `railway run ./bin/check-env`
+
 ### Deployment Fails with Database Connection Errors
 
 The application now **fails fast** with clear error messages instead of retrying indefinitely. You'll see one of these errors in the logs:

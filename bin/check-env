@@ -1,0 +1,16 @@
+#!/bin/bash
+
+echo "=== ENVIRONMENT VARIABLES CHECK ==="
+echo "Total environment variables: $(env | wc -l)"
+echo ""
+echo "Railway-specific variables:"
+env | grep "^RAILWAY_" | sort || echo "No RAILWAY_* variables found"
+echo ""
+echo "Key variables:"
+echo "  DATABASE_URL: ${DATABASE_URL:+[SET]}${DATABASE_URL:-[NOT SET]}"
+echo "  RAILS_ENV: ${RAILS_ENV:-[NOT SET]}"
+echo "  PORT: ${PORT:-[NOT SET]}"
+echo "  RAILS_MASTER_KEY: ${RAILS_MASTER_KEY:+[SET]}${RAILS_MASTER_KEY:-[NOT SET]}"
+echo ""
+echo "All environment variables:"
+env | sort

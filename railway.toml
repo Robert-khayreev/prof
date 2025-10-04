@@ -6,6 +6,8 @@ dockerfilePath = "Dockerfile"
 numReplicas = 1
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
+# Ensure environment variables are passed to the container
+env = "production"
 
 # Healthcheck to ensure app is running
 # Reduced timeout to fail fast if database connection issues
